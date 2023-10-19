@@ -1,0 +1,33 @@
+REPORT ZKINTERNAL_TABLE.
+
+TYPES:BEGIN OF ty_makt,
+      matnr TYPE makt-matnr,
+      spras TYPE makt-spras,
+      maktx TYPE makt-maktx,
+  End of ty_makt.
+
+  DATA : it_makt  TYPE SORTED TABLE OF ty_makt WITH UNIQUE key matnr spras,
+         wa_makt LIKE LINE OF it_makt.
+
+  wa_makt-matnr = '100'.
+  wa_makt-spras = 'E'.
+  wa_makt-maktx = 'BOOK'.
+  INSERT wa_makt INTO TABLE it_makt.
+
+  wa_makt-matnr = '300'.
+  wa_makt-spras = 'E'.
+  wa_makt-maktx = 'BOOK'.
+  INSERT wa_makt into table it_makt.
+
+   wa_makt-matnr = '200'.
+  wa_makt-spras = 'E'.
+  wa_makt-maktx = 'BOOK'.
+  INSERT wa_makt into table it_makt.
+
+   wa_makt-matnr = '100'.
+  wa_makt-spras = 'E'.
+  wa_makt-maktx = 'BOOK'.
+  INSERT wa_makt into table it_makt.
+
+  READ TABLE it_makt into wa_makt with TABLE KEY matnr = '200' spras = 'E'.
+  WRITE : wa_makt.

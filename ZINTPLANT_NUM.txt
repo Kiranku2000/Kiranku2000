@@ -1,0 +1,27 @@
+REPORT ZINTPLANT_NUM.
+
+TYPES : BEGIN OF ty_marc,
+matnr TYPE marc-matnr,
+werks TYPE marc-werks,
+END OF ty_marc.
+
+DATA :  it_marc TYPE TABLE OF ty_marc,
+        wa_marc LIKE lINE OF it_marc.
+
+DATA : v_name1 TYPE t001w-name1,
+       wa_v_name1 LIKE LINE OF V_name1.
+
+
+write : / 'material Number',
+40 'plant NUMBER',
+80 'PLANT NAME'.
+
+
+
+Select matnr werks FROM marc INTO st_marc WHERE matnr EQ p_matnr.
+SELECT SINGLE name1 FROM t001w INTO v_name1 WHERE werks EQ st_marc-werks.
+write : / st_marc-werks,
+40 st_marc-matnr,
+80 v_name1.
+
+ENDSELECT.

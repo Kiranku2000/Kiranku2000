@@ -1,0 +1,24 @@
+REPORT ZCOMPOUND_INTEREST.
+PARAMETERS : p_iamt TYPE p DECIMALS 2,
+             p_pper TYPE p DECIMALS 2,
+             p_days TYPE i,
+             p_che AS CHECKBOX.
+DATA :   fin_amt TYPE p DECIMALS 2,
+         intr_amt TYPE p DECIMALS 2.
+
+ IF p_che EQ 'X'.
+ intr_amt = p_iamt * ( p_pper / 100 ) * ( p_days ) .
+      fin_amt = p_iamt + intr_amt.
+
+
+    ELSE.
+      fin_amt = p_iamt.
+     DO p_days TIMES.
+    intr_amt = fin_amt * p_pper / 100.
+    fin_amt = fin_amt + intr_amt.
+    ENDDO.
+      ENDIF.
+
+      WRITE :  'Initial Amount:',p_iamt,/
+               'Total Days:',p_days,/
+               'Total Amount:',fin_amt.
