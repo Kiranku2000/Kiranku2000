@@ -1,0 +1,42 @@
+
+*&---------------------------------------------------------------------*
+*& Report ZKI_PLA
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZKI_PLA.
+
+TYPES: BEGIN OF ty_MARC,
+       matnr type marc-matnr,
+       werks type marc-matnr,
+       End of ty_marc.
+
+       TYPES:BEGIN of ty_t001w,
+       werks type t001w-werks,
+       name1 type t001w-name1,
+         END of ty_t001w.
+
+      DATA: IT_marc TYPE table of ty_MARC,
+            wa_marc like LINE OF IT_marc,
+            it_t001w type TABLE OF ty_t001w,
+            wa_t001w LIKE LINE OF it_t001w.
+
+PARAMETERS p_matnr type marc-MATNR.
+
+
+*select SINGLE name1 from t001w into v_name1 where werks eq st_marc-werks.
+select matnr werks from marc into TABLE it_marc where matnr eq p_matnr.
+
+  select werks name1 from t001w into table it_t001w for all entries in it_marc where werks eq it_marc-werks.
+
+  loop at it_marc into wa_marc.
+
+  Read table IT_T001W into wa_t001w WITH KEY werks =  wa_marc-werks.
+
+write:/  wa_marc-MATNR,
+        30 wa_marc-werks,
+        40 wa_t001w-name1.
+
+
+
+ENDLOOP.

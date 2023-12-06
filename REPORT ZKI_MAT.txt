@@ -1,0 +1,15 @@
+REPORT ZKI_MAT.
+
+
+
+  data: it_makt TYPE zdemo_tb_makt,
+        wa_makt like LINE OF it_makt.
+
+  SELECT-OPTIONS s_matnr for wa_makt-MATNR.
+
+
+ CALL FUNCTION 'ZKIP_FM'
+   EXPORTING
+     s_matnr       = s_matnr[]
+  IMPORTING
+    EX_MAKT       = it_makt

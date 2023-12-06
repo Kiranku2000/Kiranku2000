@@ -1,0 +1,118 @@
+*&---------------------------------------------------------------------*
+*& Report ZKI_BLOCK
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZKI_BLOCK.
+
+DATA :it_header TYPE zIT_header,
+      wa_header LIKE LINE OF it_header,
+      it_item   TYPE zIT_items,
+      wa_item   LIKE LINE OF it_item.
+
+
+
+SELECT-OPTIONS s_num for wa_HEADER-vbeln.
+
+START-OF-SELECTION.
+
+PERFORM Headerdetails IN PROGRAM ZKI_SUB USING s_num[] CHANGING it_header.
+
+PERFORM display_header.
+
+END-OF-SELECTION.
+
+AT LINE-SELECTION.
+DATA:FNAM(20), FVAL(50).
+DATA v_vbeln type vbaP-vbeln.
+GET CURSOR FIELD fnam value fval.
+
+PERFORM conversion.
+CLEAR it_item.
+PERFORM itemdetails in PROGRAM ZKI_SUB USING V_VBELN CHANGING IT_ITEM.
+PERFORM display_ITEM.
+*&---------------------------------------------------------------------*
+*& Form display_header
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_header .
+
+  LOOP AT IT_HEADER INTO WA_HEADER.
+    AT FIRST.
+
+ WRITE:/'DOCUMENT NUMBER',
+    20'DOCUMENT DATE',
+    30'NETVALUE',
+    40'SOLD TO PARTY'.
+ ENDAT.
+
+ WRITE:/20 WA_HEADER-VBELN,
+        30 wa_header-audat,
+        40 wa_header-netwr,
+        50 wa_header-name1.
+
+ ENDLOOP.
+
+
+
+
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form conversion
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM conversion .
+
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input         = fVAL
+   IMPORTING
+     OUTPUT        = v_vbeln
+            .
+
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form display_ITEM
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_ITEM .
+
+  LOOP AT IT_ITEM TO
+    WA_ITEM.
+
+    AT FIRST.
+
+      WRITE:/20 'ITEM NO',
+            30 'maTERIAL',
+             40 'DES',
+             50'ORDER QTY',
+             60'UOM',
+             80'NET VALUE'.
+     ENDAT.
+
+     WRITE:/ wa_ITEM-POSNR,
+             WA_ITEM-pstyv,
+             wa_item-ARKTX,
+             WA_ITEM-kwmeng,
+             WA_ITEM-MSEHL,
+             WA_ITEM-netwr.
+     ENDLOOP.
+ENDFORM.

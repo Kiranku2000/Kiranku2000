@@ -1,0 +1,99 @@
+*&---------------------------------------------------------------------*
+*& Report ZKI_STOCKS
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZKI_STOCKS.
+
+TYPES: BEGIN OF ty_file,
+         date   TYPE d,
+         price  TYPE p DECIMALS 2,
+         open   TYPE p DECIMALS 2,
+         high   TYPE p DECIMALS 2,
+         low    TYPE p DECIMALS 2,
+         amount TYPE p DECIMALS 2,
+       END OF ty_file.
+
+DATA: it_file          TYPE TABLE OF ty_file,
+      wa_file          LIKE LINE OF it_file,
+      it_raw           TYPE TRUXS_T_TEXT_DATA,
+      gv_profit_count  TYPE i,
+      gv_loss_count    TYPE i,
+      gv_long_count    TYPE i,
+      gv_short_count   TYPE i,
+      gv_initial_amt   TYPE p LENGTH 16 DECIMALS 2,
+      gv_total_trades  TYPE i,
+      gv_previous_price TYPE p LENGTH 16 DECIMALS 2,
+      gv_current_open   TYPE p LENGTH 16 DECIMALS 2,
+      gv_current_price  TYPE p LENGTH 16 DECIMALS 2.
+
+PARAMETERS: p_file TYPE LOCALFILE,
+            p_iamt TYPE p DECIMALS 2.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_file.
+  CALL FUNCTION 'F4_FILENAME'
+    EXPORTING
+      PROGRAM_NAME  = SYST-CPROG
+      DYNPRO_NUMBER = SYST-DYNNR
+      FIELD_NAME    = 'P_FILE'
+    IMPORTING
+      FILE_NAME     = p_file.
+
+START-OF-SELECTION.
+
+  CALL FUNCTION 'TEXT_CONVERT_XLS_TO_SAP'
+    EXPORTING
+      I_LINE_HEADER        = ABAP_TRUE
+      i_tab_raw_data       = it_raw
+      i_filename           = p_file
+    TABLES
+      i_tab_converted_data = it_file
+    EXCEPTIONS
+      CONVERSION_FAILED    = 1
+      OTHERS               = 2.
+
+  IF sy-subrc <> 0.
+    " Implement suitable error handling here
+  ENDIF.
+
+  CLEAR: gv_profit_count, gv_loss_count, gv_long_count, gv_short_count, gv_total_trades,
+         gv_initial_amt, gv_previous_price, gv_current_open, gv_current_price.
+
+  gv_initial_amt = p_iamt.
+
+  LOOP AT it_file INTO wa_file.
+    IF sy-tabix = 1.
+      gv_previous_price = wa_file-price.
+      CONTINUE.
+    ENDIF.
+
+    gv_current_open = wa_file-open.
+    gv_current_price = wa_file-price.
+
+    IF gv_current_open > gv_previous_price.
+      IF wa_file-high > ( 102 / 100 ) * gv_current_open.
+        gv_initial_amt = gv_initial_amt + ( 2 / 100 ) * gv_current_open.
+
+      ELSE.
+         gv_initial_amt = gv_initial_amt + ( gv_current_price - gv_current_open ).
+      ENDIF.
+       ADD 1 TO gv_long_count.
+    ELSE.
+      IF wa_file-low < ( 98 / 100 ) * gv_current_open.
+         gv_initial_amt = gv_initial_amt + ( 2 / 100 ) * gv_current_open.
+
+      ELSE.
+         gv_initial_amt = gv_initial_amt + ( gv_current_price - gv_current_open ).
+      ENDIF.
+    ENDIF.
+ADD 1 TO gv_short_count.
+    gv_previous_price = gv_current_price.
+
+ADD 1 TO gv_total_trades.
+
+  ENDLOOP.
+  gv_total_trades = gv_long_count + gv_short_count.
+  WRITE: / 'Total Trades:', gv_total_trades.
+  WRITE: / 'Total Long Positions:', gv_long_count.
+  WRITE: / 'Total Short Positions:', gv_short_count.
+  WRITE: / 'Total Profit:', gv_initial_amt.

@@ -1,0 +1,16 @@
+*&---------------------------------------------------------------------*
+*& Report ZKIRAN_BADI
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zkiran_badi.
+
+DATA o_badi TYPE REF TO zk_badi.
+
+PARAMETERS p_ctry TYPE c LENGTH 2.
+
+GET BADI o_badi FILTERS country = P_CTRY.
+
+CALL BADI O_BADI->GET_AMOUNT.
+
+WRITE 'END'.

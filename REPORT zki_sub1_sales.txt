@@ -1,0 +1,174 @@
+*&---------------------------------------------------------------------*
+*& Report ZKI_SUB1_SALES
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zki_sub1_sales.
+
+TYPES:BEGIN OF ty_range,
+        sign TYPE c LENGTH 1,
+        opti TYPE c LENGTH 2,
+        low  TYPE vbeln,
+        high TYPE vbeln,
+
+      END OF ty_range.
+
+
+DATA:it_vbak   TYPE zitv_bak,
+     wa_vbak   LIKE LINE OF it_vbak,
+     IT_vbap   TYPE zit_vbap,
+     wa_vbap   LIKE LINE OF it_vbap,
+     it_kna1   TYPE zitk_na1,
+     wa_kna1   LIKE LINE OF it_kna1,
+     it_t006a  TYPE zit_t006a,
+     wa_t006a  LIKE LINE OF it_t006a,
+     it_header TYPE zit_header,
+     wa_header LIKE LINE OF it_header,
+     it_item   TYPE zit_items,
+     wa_item   LIKE LINE OF it_item.
+
+TYPES:ty_it_range TYPE STANDARD TABLE OF ty_range.
+
+SELECT-OPTIONS s_vbeln FOR wa_vbak-vbeln.
+
+START-OF-SELECTION.
+  PERFORM header_data USING S_VBELN[] CHANGING it_header.
+END-OF-SELECTION.
+
+PERFORM DISPLAY.
+
+
+AT LINE-SELECTION.
+  DATA : fnam(20),fval(50).
+  DATA v_vbeln TYPE vbap-vbeln.
+  GET CURSOR FIELD fnam VALUE fval.
+
+  PERFORM conversion.
+  clear it_item.
+
+PERFORM ITEM_DATA USING V_VBELN CHANGING it_item.
+PERFORM DISPLAY_ITEM..
+*&---------------------------------------------------------------------*
+*& Form header_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM header_data USING P_S_VBELN TYPE ty_it_RANGE
+                 CHANGING P_IT_HEADER TYPE Zit_header.
+
+
+
+
+ SELECT  vbeln audat netwr kunnr FROM vbak INTO TABLE it_vbak WHERE vbeln IN p_s_VBELN.
+  SELECT kunnr name1 FROM kna1 INTO TABLE it_kna1 FOR ALL ENTRIES IN it_vbak WHERE kunnr EQ it_vbak-kunnr.
+  LOOP AT it_vbak INTO wa_vbak.
+    READ TABLE it_kna1 INTO wa_kna1 WITH KEY kunnr = wa_vbak-kunnr.
+    MOVE-CORRESPONDING wa_vbak TO wa_header.
+    MOVE-CORRESPONDING wa_kna1 TO wa_header.
+    APPEND wa_header TO IT_HEADER.
+
+    ENDLOOP.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form conversion
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM conversion .
+  CALL FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+    EXPORTING
+      input         = FVAL
+   IMPORTING
+     OUTPUT        = V_VBELN
+            .
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form ITEM_DATA
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> V_VBELN
+*&      <-- IT_ITEM
+*&---------------------------------------------------------------------*
+FORM item_data  USING    p_v_vbeln TYPE VBAK-VBELN
+                CHANGING p_it_item TYPE zit_items.
+
+  SELECT  vbeln posnr pstyv arktx kwmeng zieme netwr FROM vbap INTO TABLE it_vbap WHERE vbeln EQ v_vbeln.
+  SELECT msehi msehl FROM t006a INTO TABLE it_t006a FOR ALL ENTRIES IN it_vbap WHERE spras EQ sy-langu AND msehi EQ it_vbap-zieme.
+  LOOP AT it_vbap INTO wa_vbap.
+
+    READ TABLE it_t006a INTO wa_t006a WITH KEY msehi = wa_vbap-zieme.
+    MOVE-CORRESPONDING wa_vbap TO wa_item.
+    MOVE-CORRESPONDING wa_t006a TO wa_item.
+
+    APPEND wa_item TO it_item.
+ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form DISPLAY
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display .
+loop at it_header into wa_header.
+  AT FIRST.
+    WRITE :/20 'Document Number',
+           40 'Doc Date',
+           61 'Net Val',
+           90 'Sold To Party'.
+    ENDAT.
+
+  WRITE : /20 wa_header-vbeln,
+          40 wa_header-audat,
+          51 wa_header-netwr,
+         90 wa_header-name1.
+ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form DISPLAY_ITEM
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_item .
+
+  LOOP AT it_item into wa_item..
+AT FIRST.
+  WRITE :/ 'Item',
+       20 'Material',
+       35 'ItemDesc',
+60 'Order Qty' ,
+ 80 'UoM',
+ 100'NetVal'.
+  ENDAT.
+
+   WRITE : /
+    wa_item-posnr,
+            20 wa_item-pstyv,
+            35  wa_item-arktx,
+            50 wa_item-kwmeng,
+            80 wa_item-msehl,
+            90 wa_item-netwr.
+ENDLOOP.
+
+ENDFORM.

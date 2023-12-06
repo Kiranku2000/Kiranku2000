@@ -1,0 +1,28 @@
+REPORT ZK_MAT.
+
+TYPES:BEGIN OF st_MAKT,
+      MATNR TYPE MAKT-matnr,
+      SPRAS TYPE MAKT-SPRAS,
+      MAKTX TYPE MAKT-MAKTX,
+  END OF st_MAKT.
+
+  DATA: st_makt TYPE makt.
+
+  PARAMETERS :p_matnr type makt-matnr.
+*              p_spras type spras default 'EN'.
+
+*
+*  SELECT matnr spras maktx from makt into st_makt where matnr Eq p_matnr.
+    write:/ 'material no',
+             30'lang',
+             40 'des'.
+
+CALL FUNCTION 'ZPL_FM'
+  EXPORTING
+    im_matnr       = p_matnr
+ IMPORTING
+   EX_MAKT        = st_makt
+          .
+
+
+      write: / st_makt-matnr, 30 st_makt-spras, 40 st_makt-maktx.
